@@ -1,10 +1,10 @@
-# OpenWrt 制作及使用方法
+# OpenWrt 制作及使用指南
 
-查看英文说明 | [View English description](README.md)
+[English Instructions](README.md) | [中文说明](README.cn.md)
 
-使用 GitHub Actions 云编译 OpenWrt 的方法，以及本说明文档中的很多内容，来自 P3TERX, Flippy 等众多技术创新者和资源分享者, 因为众人的奉献，让我们在盒子中使用 OpenWrt 变的如此简单。
+使用 GitHub Actions 云编译 OpenWrt 的方法，以及本文档中的许多内容，来源于 P3TERX、Flippy 等众多技术创新者和资源分享者。感谢他们的无私奉献，让我们得以在盒子中轻松使用 OpenWrt。
 
-Github Actions 是 Microsoft 推出的一项服务，它提供了性能配置非常不错的虚拟服务器环境，基于它可以进行构建、测试、打包、部署项目。对于公开仓库可免费无时间限制地使用，且单次编译时间长达 6 个小时，这对于编译 OpenWrt 来说是够用的（我们一般在3小时左右可以完成一次编译工作）。分享只是为了交流经验，不足的地方请大家理解，请不要在网络上发起各种不好的攻击行为，也不要恶意使用 GitHub Actions。
+GitHub Actions 是 Microsoft 推出的一项服务，提供了性能配置优良的虚拟服务器环境，可用于项目的构建、测试、打包和部署。公开仓库可免费使用，无时间限制，且单次编译时长可达 6 小时，对于编译 OpenWrt 而言完全足够（通常约 3 小时即可完成一次编译）。本文件仅为经验交流，不足之处敬请谅解，请勿在网络上发起任何不当攻击行为，也请勿恶意滥用 GitHub Actions。
 
 # 目录
 
@@ -50,7 +50,9 @@ Github Actions 是 Microsoft 推出的一项服务，它提供了性能配置非
       - [10.2.2 更改盒子的型号和内核版本号](#1022-更改盒子的型号和内核版本号)
     - [10.3 自定义 banner 信息](#103-自定义-banner-信息)
     - [10.4 自定义 feeds 配置文件](#104-自定义-feeds-配置文件)
-    - [10.5 自定义软件默认配置信息](#105-自定义软件默认配置信息)
+    - [10.5 自定义 OpenWrt 默认配置文件](#105-自定义-openwrt-默认配置文件)
+      - [10.5.1 第一种方法是在编译时添加自定义文件](#1051-第一种方法是在编译时添加自定义文件)
+      - [10.5.2 第二种方法是在打包时添加自定义文件](#1052-第二种方法是在打包时添加自定义文件)
     - [10.6 Opkg 软件包管理](#106-opkg-软件包管理)
     - [10.7 使用 Web 界面管理软件包](#107-使用-web-界面管理软件包)
     - [10.8 如何恢复原安卓 TV 系统](#108-如何恢复原安卓-tv-系统)
@@ -64,15 +66,15 @@ Github Actions 是 Microsoft 推出的一项服务，它提供了性能配置非
 
 ## 1. 注册自己的 Github 的账户
 
-注册自己的账户，以便进行固件个性化定制的继续操作。点击 github.com 网站右上角的 `Sign up` 按钮，根据提示注册自己的账户。
+注册自己的账户，以便继续进行固件个性化定制操作。点击 github.com 网站右上角的 `Sign up` 按钮，按提示完成账户注册。
 
 ## 2. 设置隐私变量 GITHUB_TOKEN
 
-根据 [GitHub 文档](https://docs.github.com/zh/actions/security-guides/automatic-token-authentication#about-the-github_token-secret)，在每个工作流作业开始时，GitHub 会自动创建唯一的 GITHUB_TOKEN 机密以在工作流中使用。可以使用 `${{ secrets.GITHUB_TOKEN }}` 在工作流作业中进行身份验证。
+根据 [GitHub 文档](https://docs.github.com/zh/actions/security-guides/automatic-token-authentication#about-the-github_token-secret)，每个工作流作业开始时，GitHub 会自动创建唯一的 GITHUB_TOKEN 密钥以供工作流使用。可在工作流作业中通过 `${{ secrets.GITHUB_TOKEN }}` 进行身份验证。
 
 ## 3. Fork 仓库并设置工作流权限
 
-现在可以 Fork 仓库了，打开仓库 https://github.com/ophub/amlogic-s9xxx-openwrt ，点击右上的 Fork 按钮，复制一份仓库代码到自己的账户下，稍等几秒钟，提示 Fork 完成后，到自己的账户下访问自己仓库里的 amlogic-s9xxx-openwrt 。在右上角的 `Settings` > `Secrets` > `Actions` > `General` > `Workflow permissions` 下选择 `Read and write permissions` 并保存。图示如下：
+现在可以 Fork 仓库了。打开仓库 https://github.com/ophub/amlogic-s9xxx-openwrt ，点击右上角的 Fork 按钮，将仓库代码复制一份到自己的账户下。稍等片刻，Fork 完成后，前往自己账户下的 amlogic-s9xxx-openwrt 仓库。在右上角的 `Settings` > `Secrets` > `Actions` > `General` > `Workflow permissions` 下选择 `Read and write permissions` 并保存。图示如下：
 
 <div style="width:100%;margin-top:40px;margin:5px;">
 <img src=https://user-images.githubusercontent.com/68696949/109418568-0eb2f880-7a04-11eb-81c9-194e32382998.jpg width="300" />
@@ -82,11 +84,11 @@ Github Actions 是 Microsoft 推出的一项服务，它提供了性能配置非
 
 ## 4. 个性化 OpenWrt 固件定制文件说明
 
-经过前面 3 步准备工作，现在开始进行个性化固件定制吧。在 [config/lede_master](../config/lede_master) 目录下的 3 个是进行 OpenWrt 固件个性化定制的文件。这个章节我们只做最简单的说明，让你一动手就能体验到个性化定制的快乐，比较复杂的定制化操作我放在了第 10 节里，这需要你有一点点基础。
+经过前面 3 步准备工作，现在开始进行个性化固件定制。[config/lede_master](../config/lede_master) 目录下的 3 个文件用于 OpenWrt 固件个性化定制。本章仅作最简要的说明，让您快速上手体验个性化定制的乐趣，更复杂的定制操作将在第 10 节中介绍，需要您具备一定的基础知识。
 
 ### 4.1 .config 文件说明
 
-这个文件是 OpenWrt 软件包个性化定制的核心文件，包含了全部的配置信息，文件里面每一行代码代表一项个性化配置选项。虽然项目很多，但管理很简单。我们开始动手操作吧。
+该文件是 OpenWrt 软件包个性化定制的核心文件，包含了全部配置信息。文件中的每一行代码对应一个配置选项。虽然配置项众多，但管理方法十分简单。下面开始实际操作。
 
 #### 4.1.1 首先让固件支持本国语言
 
@@ -102,7 +104,7 @@ Github Actions 是 Microsoft 推出的一项服务，它提供了性能配置非
 CONFIG_PACKAGE_luci-i18n-base-fr=y
 ```
 
-.config 文件里的个性化定制全部这样操作即可。把自己不需要的项目，在行首填写 `#` ，在行尾把 `=y` 改为 `is not set` 。对于自己需要的项目，去掉行首的 `#` ，结尾把 `is not set` 改为 `=y`
+.config 文件中的个性化定制均可采用上述方式操作。对于不需要的项目，在行首添加 `#`，并将行尾的 `=y` 改为 `is not set`。对于需要的项目，去掉行首的 `#`，并将行尾的 `is not set` 改为 `=y`。
 
 #### 4.1.2 选择个性化软件包
 
@@ -117,11 +119,11 @@ CONFIG_PACKAGE_luci-app-zerotier=y
 # CONFIG_PACKAGE_luci-app-zerotier is not set
 ```
 
-我想你应该已经很明白怎么个性化配置了，.config 文件每行代表一个配置项，都可以使用这样的方法启用或删除固件里的默认配置，这个文件的完整内容有几千行，我提供的只是精简版，如何获得完整配置文件，进行更加复杂的个性化定制，我们放在第 10 节里介绍。
+相信您已经很清楚如何进行个性化配置了。.config 文件中的每一行代表一个配置项，所有配置项均可使用上述方法启用或禁用。该文件的完整内容达数千行，此处提供的仅是精简版。如何获取完整配置文件并进行更复杂的个性化定制，将在第 10 节中介绍。
 
 ### 4.2 DIY脚本操作: diy-part1.sh 和 diy-part2.sh
 
-脚本 diy-part1.sh 和 diy-part2.sh ，它们分别在更新与安装 feeds 的前后执行，当我们引入 OpenWrt 的源码库进行个性化固件编译时，有时想改写源码库中的部分代码，或者增加一些第三方提供的软件包，删除或者替换源码库中的一些软件包，比如修改默认 IP、主机名、主题、添加 / 删除软件包等操作，这些对源码库的修改指令可以写到这 2 个脚本中。我们以 coolsnowwolf 提供的 OpenWrt 源码库作为编译对象，举几个例子。
+脚本 diy-part1.sh 和 diy-part2.sh 分别在 feeds 的更新与安装前后执行。当我们引入 OpenWrt 源码库进行个性化编译时，有时需要修改源码库中的部分代码，或者添加、删除、替换某些软件包，例如修改默认 IP、主机名、主题、添加/删除软件包等。这些对源码库的修改指令可以写入这 2 个脚本中。以下以 coolsnowwolf 提供的 OpenWrt 源码库为例进行说明。
 
 我们以下的操作都以这个源码库为基础: [https://github.com/coolsnowwolf/lede](https://github.com/coolsnowwolf/lede)
 
@@ -160,7 +162,7 @@ CONFIG_PACKAGE_luci-theme-argon=y
 
 #### 举例3，通过修改源码库中的代码来实现某些需求
 
-我们增加 `luci-app-cpufreq` 对 `aarch64` 的支持，以便在我们的固件中使用（有些修改要谨慎，你必须知道你在做什么）。
+我们为 `luci-app-cpufreq` 增加对 `aarch64` 架构的支持，以便在我们的固件中使用（某些修改需要谨慎操作，请确保您明确了解修改的影响）。
 
 源文件地址： [luci-app-cpufreq/Makefile](https://github.com/coolsnowwolf/luci/blob/master/applications/luci-app-cpufreq/Makefile) 。修改代码加入对 aarch64 的支持：
 
@@ -168,15 +170,15 @@ CONFIG_PACKAGE_luci-theme-argon=y
 sed -i 's/LUCI_DEPENDS.*/LUCI_DEPENDS:=\@\(arm\|\|aarch64\)/g' package/lean/luci-app-cpufreq/Makefile
 ```
 
-这样就实现了对源码的修改。通过 diy-part1.sh 和 diy-part2.sh 这两个脚本，我们添加了一些操作命令，让编译的固件更符合我们的个性化需求。
+这样就完成了对源码的修改。通过 diy-part1.sh 和 diy-part2.sh 这两个脚本，我们添加了相应的操作命令，使编译出的固件更符合个性化需求。
 
 ### 4.3 使用 Image Builder 制作固件
 
-OpenWrt 官方网站提供了制作好的 `openwrt-imagebuilder-*-armsr-armv8.Linux-x86_64.tar.zst` 文件（下载地址：[https://downloads.openwrt.org/releases](https://downloads.openwrt.org/releases)），可以使用官方的 Image Builder 在此文件中添加软件包和插件，通常只用几分钟便可制作出一个 openwrt-rootfs.tar.gz 文件。制作方法可以参照官方文档：[使用 Image Builder](https://openwrt.org/zh/docs/guide-user/additional-software/imagebuilder)
+OpenWrt 官方网站提供了预构建的 `openwrt-imagebuilder-*-armsr-armv8.Linux-x86_64.tar.zst` 文件（下载地址：[https://downloads.openwrt.org/releases](https://downloads.openwrt.org/releases)），可以使用官方的 Image Builder 在此文件基础上添加软件包和插件，通常只需几分钟即可生成 openwrt-rootfs.tar.gz 文件。具体制作方法请参考官方文档：[使用 Image Builder](https://openwrt.org/zh/docs/guide-user/additional-software/imagebuilder)
 
-本仓库提供了一键制作服务，你只需要把分支参数传入 [imagebuilder 脚本](imagebuilder/imagebuilder.sh) 即可完成制作。
+本仓库提供了一键制作服务，只需将分支参数传入 [imagebuilder 脚本](imagebuilder/imagebuilder.sh) 即可完成制作。
 
-- 本地化制作命令：可以在 `~/amlogic-s9xxx-openwrt` 根目录下运行 `sudo ./config/imagebuilder/imagebuilder.sh openwrt:24.10.4` 指令即可生成。其中的参数 `24.10.4` 是当前可以[下载](https://downloads.openwrt.org/releases)使用的 `releases` 版本号。生成的文件在 `openwrt/bin/targets/armsr/armv8` 目录下。
+- 本地化制作命令：在 `~/amlogic-s9xxx-openwrt` 根目录下执行 `sudo ./config/imagebuilder/imagebuilder.sh openwrt:24.10.4` 即可生成。其中参数 `24.10.4` 是当前可[下载](https://downloads.openwrt.org/releases)使用的 `releases` 版本号。生成的文件位于 `openwrt/bin/targets/armsr/armv8` 目录下。
 
 - 使用 github.com 的 `Actions` 中进行制作：[Build OpenWrt with Image Builder](../.github/workflows/build-openwrt-using-imagebuilder.yml)
 
@@ -215,15 +217,15 @@ make menuconfig
 
 ## 5. 编译固件
 
-默认系统的配置信息记录在 [/etc/model_database.conf](../make-openwrt/openwrt-files/common-files/etc/model_database.conf) 文件里，其中的 `BOARD` 名字要求唯一。
+默认系统的配置信息记录在 [/etc/model_database.conf](../make-openwrt/openwrt-files/common-files/etc/model_database.conf) 文件中，其中 `BOARD` 名称必须唯一。
 
-其中 `BUILD` 的值是 `yes` 的是默认打包的部分盒子的系统，这些盒子可以直接使用。默认值是 `no` 的没有打包，这些没有打包的盒子使用时需要下载相同 `FAMILY` 的打包好的系统，在写入 `USB` 后，可以在电脑上打开 `USB 中的 boot 分区`，修改 `/boot/uEnv.txt` 文件中 `FDT 的 dtb 名称`，适配列表中的其他盒子。
+`BUILD` 值为 `yes` 的是默认打包的盒子系统，可以直接使用。`BUILD` 默认值为 `no` 的未进行打包，使用时需要下载相同 `FAMILY` 的已打包系统，写入 `USB` 后，可在电脑上打开 `USB 中的 boot 分区`，修改 `/boot/uEnv.txt` 文件中的 `FDT dtb 名称`，即可适配列表中的其他盒子。
 
-在本地编译时通过 `-b` 参数指定，在 github.com 的 Actions 里编译时通过 `openwrt_board` 参数指定。使用 `-b all` 代表打包 `BUILD` 是 `yes` 的全部设备。使用指定 `BOARD` 参数打包时，无论 `BUILD` 是 `yes` 或者 `no` 均可打包，例如：`-b r68s_s905x3-tx3_s905l3a-cm311`
+本地编译时通过 `-b` 参数指定，在 github.com 的 Actions 中编译时通过 `openwrt_board` 参数指定。使用 `-b all` 表示打包所有 `BUILD` 为 `yes` 的设备。通过指定 `BOARD` 参数打包时，无论 `BUILD` 为 `yes` 或 `no` 均可打包，例如：`-b r68s_s905x3-tx3_s905l3a-cm311`
 
 ### 5.1 手动编译
 
-在自己仓库的导航栏中，点击 Actions 按钮，再依次点击 Build OpenWrt > Run workflow > Run workflow ，开始编译，等待大约 3 个小时，全部流程都结束后就完成编译了。图示如下：
+在自己仓库的导航栏中，点击 Actions 按钮，再依次点击 Build OpenWrt > Run workflow > Run workflow，开始编译。等待约 3 小时，全部流程结束后即完成编译。图示如下：
 
 <div style="width:100%;margin-top:40px;margin:5px;">
 <img src=https://user-images.githubusercontent.com/68696949/109418662-a0226a80-7a04-11eb-97f6-aeb893336e8c.jpg width="300" />
@@ -242,7 +244,7 @@ schedule:
 
 ### 5.3 使用逻辑卷扩大 Github Actions 编译空间
 
-Github Actions 编译空间默认是 84G，除去系统和必要软件包外，可用空间在 50G 左右，当编译全部固件时会遇到空间不足的问题，可以使用逻辑卷扩大编译空间至 110G 左右。参考 [.github/workflows/build-openwrt-system-image.yml](../.github/workflows/build-openwrt-system-image.yml) 文件里的方法，使用下面的命令创建逻辑卷。并在编译时使用逻辑卷的路径。
+Github Actions 编译空间默认为 84G，扣除系统和必要软件包后，可用空间约 50G。编译全部固件时可能遇到空间不足的问题，可以通过逻辑卷将编译空间扩展至约 110G。参考 [.github/workflows/build-openwrt-system-image.yml](../.github/workflows/build-openwrt-system-image.yml) 文件中的方法，使用以下命令创建逻辑卷，并在编译时使用逻辑卷的路径。
 
 ```yaml
 - name: Create simulated physical disk
@@ -266,9 +268,9 @@ Github Actions 编译空间默认是 84G，除去系统和必要软件包外，�
 
 ## 6. 保存固件
 
-固件保存的设置也在 .github/workflows/build-openwrt-system-image.yml 文件里控制。我们将编译好的固件通过脚本自动上传到 github 官方提供的 Actions 和 Releases 里面，或者上传到第三方（ 如 WeTransfer ）。
+固件保存的设置同样在 .github/workflows/build-openwrt-system-image.yml 文件中控制。编译好的固件将通过脚本自动上传至 GitHub 官方提供的 Actions 和 Releases，或上传至第三方平台（如 WeTransfer）。
 
-现在 github 里 Actions 的最长保存期是 90 天，Releases 是永久，第三方如 WeTransfer 是 7 天。首先我们感谢这些服务商提供的免费支持，但是也请各位节约使用，我们提倡合理使用免费服务。
+目前 GitHub Actions 的最长保存期为 90 天，Releases 为永久保存，第三方平台如 WeTransfer 为 7 天。首先感谢这些服务商提供的免费支持，也请各位节约使用，提倡合理利用免费服务。
 
 ### 6.1 保存到 Github Actions
 
@@ -314,11 +316,11 @@ Github Actions 编译空间默认是 84G，除去系统和必要软件包外，�
 
 ## 7. 下载固件
 
-下载我们已经编译好并上传至相关存储位置的 OpenWrt 固件。
+下载已编译并上传至相关存储位置的 OpenWrt 固件。
 
 ### 7.1 从 Github Actions 下载
 
-点击仓库导航条里的 Actions 按钮，在 All workflows 列表里，点击已经编译完成的固件列表，在里面的固件列表里，选择和自己盒子型号对应的固件。图示如下：
+点击仓库导航栏中的 Actions 按钮，在 All workflows 列表中，点击已编译完成的固件列表，选择与自己盒子型号对应的固件进行下载。图示如下：
 
 <div style="width:100%;margin-top:40px;margin:5px;">
 <img src=https://user-images.githubusercontent.com/68696949/109418782-08714c00-7a05-11eb-9556-91575640a4bb.jpg width="300" />
@@ -336,14 +338,14 @@ Github Actions 编译空间默认是 84G，除去系统和必要软件包外，�
 
 ### 7.3 从第三方下载
 
-在 .github/workflows/build-openwrt-system-image.yml 文件里，我们默认关闭了上传至第三方的选项，如果你需要，把 false 改为 ture ，下次编译完成就上传到第三方了。第三方的网址可以在固件编译流程的日志里看到，也可以输出到编译信息里。
+在 .github/workflows/build-openwrt-system-image.yml 文件中，默认已关闭上传至第三方的选项。如需启用，将 false 改为 true，下次编译完成后就会自动上传至第三方。第三方的地址可以在固件编译流程的日志中查看，也可以输出到编译信息中。
 
 ```yaml
 UPLOAD_COWTRANSFER: false
 UPLOAD_WETRANSFER: false
 ```
 
-上传至第三方的支持来自 https://github.com/Mikubill/transfer ，如果你需要，可以根据他的说明添加更多第三方支持（控制你的创造力，不要浪费太多的免费资源）。图示如下：
+上传至第三方的功能来自 https://github.com/Mikubill/transfer ，如需要，可以根据其说明添加更多第三方支持（请节制使用，避免浪费过多免费资源）。图示如下：
 
 <div style="width:100%;margin-top:40px;margin:5px;">
 <img src=https://user-images.githubusercontent.com/68696949/109418921-b5e45f80-7a05-11eb-80ba-02edb0698270.jpg width="300" />
@@ -370,11 +372,11 @@ git clone https://github.com/ophub/luci-app-amlogic.git package/luci-app-amlogic
 
 ### 8.3 安装 Docker 版本的 OpenWrt
 
-可以在 Ubuntu/Debian/Armbian 等系统中使用 Docker 版本的 OpenWrt 镜像。这些镜像托管在 [Docker Hub](https://hub.docker.com/r/ophub) 上，可以直接下载使用。
+可以在 Ubuntu/Debian/Armbian 等系统中使用 Docker 版本的 OpenWrt 镜像。这些镜像托管在 [Docker Hub](https://hub.docker.com/r/ophub) 上，可直接下载使用。
 
 #### 8.3.1 安装 Docker 运行环境
 
-这里以 Ubuntu 系统为例，使用下面的命令安装 Docker 运行环境：
+以下以 Ubuntu 系统为例，使用如下命令安装 Docker 运行环境：
 
 ```shell
 curl -fsSL https://get.docker.com | sh
@@ -428,7 +430,7 @@ docker rm -f openwrt
 
 ## 9. 升级 OpenWrt 系统或内核
 
-从浏览器访问 openwrt 系统，在 `系统` 菜单下，选择 `晶晨宝盒`，选择 `升级 OpenWrt 固件` 或 `更换 OpenWrt 内核` 功能进行升级。（你可以从高版本如 5.15.50 升级到低版本如 5.10.125 ，也可以从低版本如 5.10.125 升级到高版本如 5.15.50 。内核版本号的高低不影响升级，可自由升级/降级）。
+通过浏览器访问 OpenWrt 系统，在 `系统` 菜单下选择 `晶晨宝盒`，通过 `升级 OpenWrt 固件` 或 `更换 OpenWrt 内核` 功能进行升级。（支持从高版本如 5.15.50 降级到低版本如 5.10.125，也支持从低版本如 5.10.125 升级到高版本如 5.15.50。内核版本号的高低不影响升级操作，可自由升级/降级）。
 
 [SOS]：因特殊原因导致的内核更新不完整等问题，造成系统无法从 eMMC/NVMe/sdX 启动时，可以从 USB 等其他磁盘启动任意内核版本的 OpenWrt 系统，在 `系统菜单` > `晶晨宝盒` > `在线下载更新` > `救援内核` 里进行内核救援，恢复原系统的正常使用；也可以在 `TTYD 终端` 里使用 `openwer-kernel -s` 命令进行内核救援。不指定磁盘参数时，默认将从 USB 设备恢复 eMMC/NVMe/sdX 中的内核，如果设备有多个磁盘，可以准确指定需要恢复的磁盘名称，举例如下：
 
@@ -451,13 +453,13 @@ openwer-kernel -s
 
 ## 10. 个性化固件定制晋级教程
 
-如果你把教程看到这个步骤了，我相信你已经知道怎么快乐的玩耍了。但是继续深入的探索下去，将开启一个不平凡的折腾之旅，你将碰到很多的问题，这需要你有不断探索的心理准备，要善于使用搜索引擎解决问题，要花一定的时间去一些 openwrt 社区学习。
+如果您已经按照教程学习到这一步，相信您已经掌握了基本用法。但继续深入探索，将开启一段丰富的折腾之旅。您会遇到许多问题，这需要您做好持续探索的心理准备，善于借助搜索引擎解决问题，并花一些时间在 OpenWrt 社区中学习。
 
 ### 10.1 认识完整的 .config 文件
 
-使用 openwrt 的官方源码库，或者其他分支的源码库进行一次本地化编译，如选择 https://github.com/coolsnowwolf/lede 的源码库，根据它的编译说明，在本地安装 Ubuntu 系统，部署环境并完成一次本地编译。在本地编译配置界面中，你也可以看到很多丰富的说明，这将加强你对 openwrt 编译过程的理解。
+使用 OpenWrt 官方源码库或其他分支源码库进行一次本地化编译。例如选择 https://github.com/coolsnowwolf/lede 源码库，按照其编译说明在本地安装 Ubuntu 系统，部署环境并完成本地编译。在本地编译配置界面中，您还可以看到大量详细的说明，这将加深您对 OpenWrt 编译过程的理解。
 
-当你在本地完成 openwrt 个性化配置后，保存并退出配置界面，你可以在本地 openwrt 源码库的根目录下找到 .config 文件（ 在代码库的根目录下输入 `ls -a` 命令查看全部隐藏文件），你可以把这个文件直接上传到 github.com 里你的仓库里，替换 `config/lede_master/config` 这个文件。
+完成 OpenWrt 个性化配置后，保存并退出配置界面，您可以在本地 OpenWrt 源码库的根目录下找到 .config 文件（在源码库根目录下执行 `ls -a` 命令可查看所有隐藏文件）。您可以将该文件直接上传至 github.com 中您的仓库，替换 `config/lede_master/config` 文件。
 
 ### 10.2 认识 workflow 文件
 
@@ -501,25 +503,27 @@ REPO_BRANCH: openwrt-21.02
 
 ### 10.3 自定义 banner 信息
 
-默认的 [/etc/banner](../openwrt-files/common-files/etc/banner) 信息如下，你可以使用 [banner 生成器](https://www.bootschool.net/ascii) 定制专属自己的个性化 banner 信息（下面的样式为 `slant`），覆盖同名文件即可。
+默认的 [/etc/banner](../openwrt-files/common-files/etc/banner) 信息如下，你可以使用 [banner 生成器](https://www.bootschool.net/ascii) 定制专属自己的个性化 banner 信息（下面的样式为 `slant`）。使用 `10.5.2` 的方法可以在制作 OpenWrt 时添加自定义 banner 以及其他 OpenWrt 文件。
 
 ```shell
-      ____                 _       __     __        ____
-     / __ \____  ___  ____| |     / /____/ /_      / __ )____  _  __
-    / / / / __ \/ _ \/ __ \ | /| / / ___/ __/_____/ __  / __ \| |/_/
-   / /_/ / /_/ /  __/ / / / |/ |/ / /  / /_/_____/ /_/ / /_/ />  <
-   \____/ .___/\___/_/ /_/|__/|__/_/   \__/     /_____/\____/_/|_|
-       /_/  H E L L O - W O R L D    W I R E L E S S - F R E E D O M
+     ____                 _       __     __        __    ___    ____
+    / __ \____  ___  ____| |     / /____/ /_      / /   /   |  / __ )
+   / / / / __ \/ _ \/ __ \ | /| / / ___/ __/     / /   / /| | / __  |
+  / /_/ / /_/ /  __/ / / / |/ |/ / /  / /_      / /___/ ___ |/ /_/ /
+  \____/ .___/\___/_/ /_/|__/|__/_/   \__/     /_____/_/  |_/_____/
+      /_/ H E L L O - W O R L D   @   W I R E L E S S - F R E E D O M
 ───────────────────────────────────────────────────────────────────────
 ```
 
 ### 10.4 自定义 feeds 配置文件
 
-当你查看源码库中的 feeds.conf.default 文件时，你是不是发现这里引入了很多软件包的源码库呢，没错，我们在 GitHub 上可以找到 openwrt 官方提供的源码库，还有很多人分享的 openwrt 的分支及软件包，如果你了解他们，可以从这里添加。比如 coolsnowwolf 源码库中的 [feeds.conf.default](https://github.com/coolsnowwolf/lede/blob/master/feeds.conf.default)
+当您查看源码库中的 feeds.conf.default 文件时，会发现它引入了许多软件包源码库。没错，在 GitHub 上不仅可以找到 OpenWrt 官方提供的源码库，还有很多人分享的 OpenWrt 分支及软件包。如果您熟悉这些资源，可以在此处添加。例如 coolsnowwolf 源码库中的 [feeds.conf.default](https://github.com/coolsnowwolf/lede/blob/master/feeds.conf.default)
 
-### 10.5 自定义软件默认配置信息
+### 10.5 自定义 OpenWrt 默认配置文件
 
-我们在使用的 openwrt 的时候，已经对很多软件进行了配置，这些软件的配置信息大部分都保存在了你的 openwrt 的 /etc/config/ 等相关目录下，把这些配置信息的存储文件复制到 GitHub 中仓库根目录下的 files 文件夹中，请保持目录结构和文件名称相同。在 openwrt 编译时，这些配置信息的存储文件将会被编译到你的固件中，具体做法在 .github/workflows/build-openwrt-system-image.yml 文件中，让我们在一起看看这段代码吧：
+#### 10.5.1 第一种方法是在编译时添加自定义文件
+
+在使用 OpenWrt 的过程中，很多软件已经进行了配置，这些配置信息大部分保存在 OpenWrt 的 /etc/config/ 等相关目录下。将这些配置文件复制到 GitHub 仓库根目录下的 files 文件夹中，请保持目录结构和文件名称一致。在 OpenWrt 编译时，这些配置文件将会被编译到固件中。具体做法在 .github/workflows/build-openwrt-system-image.yml 文件中，如下所示：
 
 ```yaml
 - name: Load custom configuration
@@ -531,15 +535,28 @@ REPO_BRANCH: openwrt-21.02
     ${GITHUB_WORKSPACE}/${DIY_P2_SH}
 ```
 
-请不要复制那些涉及隐私的配置信息文件，如果你的仓库是公开的，那么你放在 files 目录里的文件也是公开的，千万不要把秘密公开。一些密码等信息，可以使用你刚才在 GitHub Actions 快速上手指南里学习到的私钥设置等方法来加密使用。你一定要了解你在做什么。
+请勿复制涉及隐私的配置文件。如果您的仓库是公开的，files 目录中的文件同样会公开，切勿泄露敏感信息。密码等信息可以使用您在 GitHub Actions 快速入门中学到的私钥设置等方法进行加密。请确保您了解自己在做什么。
+
+#### 10.5.2 第二种方法是在打包时添加自定义文件
+
+使用 ophub 打包 OpenWrt 时，使用 `openwrt_files` 参数可以添加或覆盖自定义文件到 ophub 的 [common-files](https://github.com/ophub/amlogic-s9xxx-openwrt/tree/main/make-openwrt/openwrt-files/common-files) 目录。目录结构必须与 OpenWrt 根目录保持一致，以确保文件被正确覆盖到固件中（例如：默认配置文件应存放于 `etc/config/` 子目录下）。设置方法举例：
+
+```yaml
+- name: Packaging OpenWrt
+  uses: ophub/amlogic-s9xxx-openwrt@main
+  with:
+    openwrt_path: openwrt/output/*rootfs.tar.gz
+    openwrt_files: files
+    ...
+```
 
 ### 10.6 Opkg 软件包管理
 
-像大多数 Linux 发行版（ 或移动设备操作系统，例如 Android 或 iOS ）一样，可以通过从软件包存储库（ 本地或 Internet ）下载和安装软件包来升级系统的功能。opkg 实用程序是用于此作业的轻量级软件包管理器。 旨在将软件添加到嵌入式设备的固件中。Opkg 是用于根文件系统的完整软件包管理器，包括内核模块和驱动程序。软件包管理器 opkg 尝试解决存储库中软件包的依赖关系，如果失败，它将报告错误并中止该软件包的安装。第三方软件包可能缺少依赖项，可以从软件包的来源中获得。要忽略依赖项错误，请传递 `--force-depends` 参数。
+与大多数 Linux 发行版（或移动设备操作系统，如 Android 或 iOS）类似，可以通过从软件包存储库（本地或网络）下载并安装软件包来扩展系统功能。opkg 实用程序是专为嵌入式设备固件设计的轻量级软件包管理器。Opkg 是用于根文件系统的完整软件包管理器，支持内核模块和驱动程序。opkg 会尝试解析存储库中软件包的依赖关系，如果失败，将报告错误并中止安装。第三方软件包可能缺少依赖项，可从软件包的来源获取。若要忽略依赖错误，请使用 `--force-depends` 参数。
 
-- 如果您使用的是快照/主干/最新版本，则如果存储库中的软件包所使用的内核版本比您拥有的内核版本新，则安装软件包可能会失败。在这种情况下，您将收到错误消息如`无法满足以下依赖关系……`。对于 OpenWrt 固件的这种用法，强烈建议你在 OpenWrt 固件编译时直接集成你所需要的软件包。
+- 如果您使用的是快照/主干/最新版本，当存储库中软件包所使用的内核版本新于您当前的内核版本时，安装软件包可能会失败，并收到类似 `无法满足以下依赖关系……` 的错误信息。因此，强烈建议在 OpenWrt 固件编译时直接集成所需的软件包。
 
-- 非 openwrt.org 官方插件，例如 `luci-app-uugamebooster` ，`luci-app-xlnetacc` 等，需要在固件编译期间直接集成进行编译。这些软件包不能使用 opkg 从镜像服务器直接安装，但是你可以手动上传这些软件包到 openwrt 并使用 opkg 来安装它。
+- 非 openwrt.org 官方插件，如 `luci-app-uugamebooster`、`luci-app-xlnetacc` 等，需要在固件编译时直接集成。这些软件包无法通过 opkg 从镜像服务器直接安装，但您可以手动上传这些软件包到 OpenWrt 并使用 opkg 进行安装。
 
 - 在主干/快照上时，内核和kmod软件包被标记为保留，`opkg upgrade` 命令将不会尝试更新它们。
 
@@ -560,7 +577,7 @@ opkg list | grep <pkgs>                           #查找与关键字匹配的�
 
 ### 10.7 使用 Web 界面管理软件包
 
-将 OpenWrt 固件安装到设备后，可以通过 WebUI 来安装其他软件包。
+将 OpenWrt 固件安装到设备后，可以通过 Web 界面安装其他软件包。
 
 1. 登录 OpenWrt → `系统` → `软件包`
 2. 点击 `刷新列表` 按钮进行更新
@@ -695,7 +712,7 @@ Network -> File Transfer -> curl、wget-ssl
         -> Version Control Systems -> git
         -> WirelessAPD   -> hostapd-common
                          -> wpa-cli
-                         -> wpad-basic
+                         -> wpad-mesh-openssl
         -> iw
 
 
