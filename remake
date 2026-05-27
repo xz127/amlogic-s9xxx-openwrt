@@ -554,13 +554,13 @@ download_depends() {
     cp -af --no-preserve=ownership "${git_tmp_path}/luci-app-amlogic/root/usr/sbin/." "${common_files}/usr/sbin" ||
         error_msg "luci-app-amlogic: sbin download failed."
     echo -e "${INFO} luci-app-amlogic: sbin download completed."
-    chmod +x "${common_files}/usr/sbin"/*
+    find "${common_files}/usr/sbin/" -name "openwrt-*" -exec chmod +x {} + 2>/dev/null
     # Move the share files to the storage directory
     mkdir -p "${common_files}/usr/share/amlogic"
     cp -af --no-preserve=ownership "${git_tmp_path}/luci-app-amlogic/root/usr/share/amlogic/." "${common_files}/usr/share/amlogic" ||
         error_msg "luci-app-amlogic: share download failed."
     echo -e "${INFO} luci-app-amlogic: share download completed."
-    chmod +x "${common_files}/usr/share/amlogic"/*
+    find "${common_files}/usr/share/amlogic/" -type f -exec chmod +x {} + 2>/dev/null
     # Delete temporary files
     rm -rf "${git_tmp_path}"
 }
@@ -1216,6 +1216,14 @@ EOF
         sed -e "s/macaddr=.*/macaddr=${random_macaddr}:06/" "brcmfmac43430-sdio.txt" >"brcmfmac43430-sdio.panther,x2.txt"
         # ct2000 s922x is brm4359
         sed -i "s/macaddr=.*/macaddr=${random_macaddr}:07/" "brcmfmac4359-sdio.ali,ct2000.txt"
+        # easepi-r2 is AP6256 (BCM43455) wifi/bluetooth
+        sed -e "s/macaddr=.*/macaddr=${random_macaddr}:08/" "brcmfmac43455-sdio.txt" >"brcmfmac43455-sdio.linkease,easepi-r2.txt"
+        ln -sf brcmfmac43455-sdio.bin brcmfmac43455-sdio.linkease,easepi-r2.bin
+        ln -sf brcmfmac43455-sdio.clm_blob brcmfmac43455-sdio.linkease,easepi-r2.clm_blob
+        # easepi-a2 is AP6255 (BCM43455) wifi/bluetooth
+        sed -e "s/macaddr=.*/macaddr=${random_macaddr}:09/" "brcmfmac43455-sdio.txt" >"brcmfmac43455-sdio.easepi,a2.txt"
+        ln -sf brcmfmac43455-sdio.bin brcmfmac43455-sdio.easepi,a2.bin
+        ln -sf brcmfmac43455-sdio.clm_blob brcmfmac43455-sdio.easepi,a2.clm_blob
     )
 
     # Add firmware version information to the terminal banner

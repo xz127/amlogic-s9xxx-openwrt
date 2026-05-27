@@ -15,12 +15,12 @@ on:
       releases_branch:
         description: "Select the releases branch"
         required: false
-        default: "openwrt:25.12.2"
+        default: "openwrt:25.12.4"
         type: choice
         options:
+          - openwrt:25.12.4
+          - openwrt:25.12.3
           - openwrt:25.12.2
-          - openwrt:25.12.1
-          - openwrt:25.12.0
           - immortalwrt:24.10.6
           - immortalwrt:24.10.5
           - immortalwrt:24.10.4
@@ -31,15 +31,16 @@ on:
         type: choice
         options:
           - all
+          - allwinner
           - amlogic
           - rockchip
-          - allwinner
           - rockchip50
           - rockchip50_100
+          - rockchip100_150
           - first50
           - range50_100
           - range100_150
-          - last20
+          - last50
           - a311d-oes_s922x-oes-plus_wxy-oect
           - nsy-g16-plus_nsy-g68-plus_bdy-g18-pro
           - s905d_s905x3_s912_s922x-ct2000
@@ -55,6 +56,8 @@ on:
           - beikeyun
           - boca-tcn100
           - boca-tcn200
+          - bt-100m
+          - bt-1000m
           - cd1000
           - chainedbox
           - cm3588-nas
@@ -66,6 +69,8 @@ on:
           - e20c
           - e25
           - eaidk-610
+          - easepi-a2
+          - easepi-r2
           - emb3531
           - fine3399
           - firefly-itx-3588j
@@ -87,6 +92,7 @@ on:
           - hs530r
           - ht2
           - hugsun-x99
+          - indiedroid-nova
           - ipc-r
           - jp-tvbox
           - king3399
@@ -96,6 +102,7 @@ on:
           - leez
           - lubancat-1
           - lubancat-2
+          - lubancat-4
           - lx-r3s
           - lyt-t68m
           - lz-d3568
@@ -111,6 +118,7 @@ on:
           - nsy-g68-plus
           - orangepi-3b
           - orangepi-5-plus
+          - orangepi-5-pro
           - orangepi-5b
           - orangepi-zero3
           - painet-p3
@@ -121,6 +129,8 @@ on:
           - renegade-rk3328
           - rk3318-box
           - rock-5-itx
+          - rock-3b
+          - rock-3c
           - rock5b
           - rock5c
           - ruisen-box
@@ -212,6 +222,7 @@ on:
           - s922x-reva
           - s922x-ugoos-am6
           - seewo-sv21
+          - seewo-sv50
           - smart-am40
           - smart-am60
           - station-m1
@@ -365,16 +376,16 @@ jobs:
           echo "status=success" >> ${GITHUB_OUTPUT}
 
       - name: Upload OpenWrt rootfs to Release
-        uses: ncipollo/release-action@main
+        uses: ophub/upload-to-releases@main
         if: ${{ steps.imagebuilder.outputs.status == 'success' && !cancelled() }}
         with:
           tag: ${{ env.build_tag }}
           artifacts: output/*
-          allowUpdates: true
-          removeArtifacts: false
-          replacesArtifacts: true
-          makeLatest: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          allow_updates: true
+          remove_artifacts: false
+          replaces_artifacts: true
+          make_latest: true
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package OpenWrt for target boards
         if: ${{ steps.imagebuilder.outputs.status == 'success' && !cancelled() }}
@@ -390,16 +401,16 @@ jobs:
           builder_name: ${{ inputs.builder_name }}
 
       - name: Upload packaged OpenWrt to Release
-        uses: ncipollo/release-action@main
+        uses: ophub/upload-to-releases@main
         if: ${{ env.PACKAGED_STATUS == 'success' && !cancelled() }}
         with:
           tag: ${{ env.build_tag }}
           artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
-          allowUpdates: true
-          removeArtifacts: false
-          replacesArtifacts: true
-          makeLatest: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          allow_updates: true
+          remove_artifacts: false
+          replaces_artifacts: true
+          make_latest: true
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
           body: |
             ### OpenWrt Image Information
             - Default IP: `192.168.1.1`
